@@ -16,25 +16,23 @@ const crawler = new PlaywrightCrawler({
         }
 
         const ingredientsElements = await page.$$(
-          ".recipe-page-body--secondary-title + tbody tr td"
+          ".recipe__ingredients > table > tbody > tr > td"
         );
 
-        if (!ingredientsElements) {
-          throw new Error("Ingredients not found on the page.");
-        }
-
+        const ingredient = await Promise.all(
+          ingredientsElements.map(async (element) => {
+            return element.textContent();
+          })
+        );
         const title = await titleElement.textContent();
 
-        const ingredients = await ingredientsElements.map(
-          async (element) => await element.textContent()
-        );
         const recipe = {
           title,
-          ingredients,
+          ingredient,
         };
 
-        console.log(recipe);
-        // await Dataset.pushData(results);
+        //console.log(recipe);
+        await Dataset.pushData(recipe);
       } else if (request.label === "CATEGORY") {
         await page.waitForSelector(".u-1\\/2 > a");
         await enqueueLinks({
@@ -62,13 +60,7 @@ const crawler = new PlaywrightCrawler({
         console.log(request.url);
       }
     } catch (error) {
-      if (error instanceof Playwright.errors.TimeoutError) {
-        console.error("Timeout error: The operation timed out.");
-      } else if (error instanceof Playwright.errors.ElementHandleError) {
-        console.error("Element handle error:", error.message);
-      } else {
-        console.error("An unexpected error occurred:", error.message);
-      }
+      console.error("An unexpected error occurred:", error.message);
     }
   },
 });
