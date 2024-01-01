@@ -19,19 +19,23 @@ const crawler = new PlaywrightCrawler({
           ".recipe__ingredients > table > tbody > tr > td"
         );
 
-        const ingredient = await Promise.all(
+        const ingredients = await Promise.all(
           ingredientsElements.map(async (element) => {
-            return element.textContent();
+            const rawText = await element.textContent();
+            // Remove leading newline characters and dashes
+            const cleanedText = rawText.replace(/^\s*–\s*/gm, "");
+            return cleanedText;
           })
         );
+
         const title = await titleElement.textContent();
 
         const recipe = {
           title,
-          ingredient,
+          ingredients,
         };
 
-        //console.log(recipe);
+        console.log(recipe);
         await Dataset.pushData(recipe);
       } else if (request.label === "CATEGORY") {
         await page.waitForSelector(".u-1\\/2 > a");
