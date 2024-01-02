@@ -29,7 +29,8 @@ const crawler = new PlaywrightCrawler({
         const ingredientUnit = await Promise.all(
           ingredientUnitElements.map(async (element) => {
             const rawText = await element.textContent();
-            return rawText;
+            const unit = rawText.trim().replace(/^[,\s]+|[,\s]+$/g, "");
+            return unit;
           })
         );
 
@@ -54,7 +55,8 @@ const crawler = new PlaywrightCrawler({
               });
               return tdElement.textContent.trim();
             });
-            return textContent;
+            const cleanedText = textClean(textContent);
+            return cleanedText;
           })
         );
 
