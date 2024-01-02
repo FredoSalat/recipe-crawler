@@ -1,4 +1,5 @@
 import { PlaywrightCrawler, Dataset } from "crawlee";
+import { textClean } from "./utilities.js";
 
 const loadedCategoriesLimit = 1;
 const loadedRecipeLimit = 1;
@@ -21,13 +22,13 @@ const crawler = new PlaywrightCrawler({
           throw new Error(`Ingredients not found on this page ${request.url}`);
         }
 
-        const title = await titleElement.textContent();
+        const rawTitle = await titleElement.textContent();
+        const title = textClean(rawTitle);
 
         const ingredients = await Promise.all(
           ingredientsElements.map(async (element) => {
             const rawText = await element.textContent();
-            // Remove leading newline characters and dashes
-            const cleanedText = rawText.replace(/^\s*–\s*/gm, "");
+            const cleanedText = textClean(rawText);
             return cleanedText;
           })
         );
