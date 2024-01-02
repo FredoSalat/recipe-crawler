@@ -1,5 +1,5 @@
-// Remove leading newline characters and dashes
+// Remove leading newline characters and dashes, whitespace and line breaks
 
 export const textClean = (text) => {
-  return text.replace(/^\s*–\s*/gm, "");
+  return text.trim().replace(/^\s*–\s*/gm, "", /\n\s+/g, " ");
 };

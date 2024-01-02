@@ -14,27 +14,54 @@ const crawler = new PlaywrightCrawler({
           throw new Error(`Title not found on this page ${request.url}`);
         }
 
-        const ingredientsElements = await page.$$(
+        const ingredientElements = await page.$$(
           ".recipe__ingredients > table > tbody > tr > td"
         );
 
-        if (!ingredientsElements) {
+        if (!ingredientElements) {
           throw new Error(`Ingredients not found on this page ${request.url}`);
         }
+
+        const ingredientUnitElements = await page.$$(
+          ".recipe__ingredients > table > tbody > tr > td > span"
+        );
+
+        const ingredientUnit = await Promise.all(
+          ingredientUnitElements.map(async (element) => {
+            const rawText = await element.textContent();
+            return rawText;
+          })
+        );
 
         const rawTitle = await titleElement.textContent();
         const title = textClean(rawTitle);
 
-        const ingredients = await Promise.all(
-          ingredientsElements.map(async (element) => {
+        const preparation = await Promise.all(
+          ingredientElements.map(async (element) => {
             const rawText = await element.textContent();
             const cleanedText = textClean(rawText);
             return cleanedText;
           })
         );
 
+        const ingredients = await Promise.all(
+          ingredientElements.map(async (element) => {
+            const textContent = await element.evaluate((tdElement) => {
+              // Function to extract text content excluding <span> elements
+              const spanElements = tdElement.querySelectorAll("span");
+              spanElements.forEach((spanElement) => {
+                spanElement.remove();
+              });
+              return tdElement.textContent.trim();
+            });
+            return textContent;
+          })
+        );
+
         const recipe = {
           title,
+          preparation,
+          ingredientUnit,
           ingredients,
         };
 
