@@ -1,23 +1,27 @@
 import { PlaywrightCrawler, Dataset } from "crawlee";
 
-const categoryLimit = 1;
-const recipeLimit = 1;
+const loadedCategoriesLimit = 1;
+const loadedRecipeLimit = 1;
 
 const crawler = new PlaywrightCrawler({
   requestHandler: async ({ page, request, enqueueLinks }) => {
     try {
       if (request.label === "DETAIL") {
-        console.log(request.url);
-
         const titleElement = await page.locator(".c-recipe__title");
 
         if (!titleElement) {
-          throw new Error("Title not found on the page.");
+          throw new Error(`Title not found on this page ${request.url}`);
         }
 
         const ingredientsElements = await page.$$(
           ".recipe__ingredients > table > tbody > tr > td"
         );
+
+        if (!ingredientsElements) {
+          throw new Error(`Ingredients not found on this page ${request.url}`);
+        }
+
+        const title = await titleElement.textContent();
 
         const ingredients = await Promise.all(
           ingredientsElements.map(async (element) => {
@@ -28,8 +32,6 @@ const crawler = new PlaywrightCrawler({
           })
         );
 
-        const title = await titleElement.textContent();
-
         const recipe = {
           title,
           ingredients,
@@ -38,13 +40,15 @@ const crawler = new PlaywrightCrawler({
         console.log(recipe);
         await Dataset.pushData(recipe);
       } else if (request.label === "CATEGORY") {
+        // Queues each recipe within every category
         await page.waitForSelector(".u-1\\/2 > a");
         await enqueueLinks({
-          limit: recipeLimit,
+          limit: loadedRecipeLimit,
           selector: ".u-1\\/2 > a",
           label: "DETAIL",
         });
 
+        // Paginates through all recipe pages
         const nextButton = await page.$("a.pagination__next");
 
         if (nextButton) {
@@ -55,16 +59,17 @@ const crawler = new PlaywrightCrawler({
         }
         console.log(request.url);
       } else {
+        // Queues all categories on the category page
         await page.waitForSelector(".c-card > a");
         await enqueueLinks({
-          limit: categoryLimit,
+          limit: loadedCategoriesLimit,
           selector: ".c-card > a",
           label: "CATEGORY",
         });
         console.log(request.url);
       }
     } catch (error) {
-      console.error("An unexpected error occurred:", error.message);
+      console.error("An error occurred:", error.message);
     }
   },
 });
