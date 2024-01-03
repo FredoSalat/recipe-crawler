@@ -11,11 +11,7 @@ const crawler = new PlaywrightCrawler({
         const titleElement = await page.locator(".c-recipe__title");
 
         const ingredientElements = await page.$$(
-          ".recipe__ingredients > table > tbody > tr > td"
-        );
-
-        const ingredientAmountElements = await page.$$(
-          ".recipe__ingredients > table > tbody > tr > td > span"
+          ".recipe-page-body__ingredients"
         );
 
         if (!titleElement) {
@@ -26,48 +22,38 @@ const crawler = new PlaywrightCrawler({
           throw new Error(`Ingredients not found on this page ${request.url}`);
         }
 
-        if (!ingredientAmountElements) {
-          throw new Error(
-            `Ingredient units not found on this page ${request.url}`
-          );
-        }
         // recipe name
         const rawTitle = await titleElement.textContent();
         const title = sanitizeText(rawTitle);
-        // amount + unit
-        const ingredientAmount = await Promise.all(
-          ingredientAmountElements.map(async (element) => {
-            const rawAmount = await element.textContent();
-            return sanitizeText(rawAmount);
-          })
-        );
-        // Ingredient + amount
-        const preparation = await Promise.all(
-          ingredientElements.map(async (element) => {
-            const rawPreparation = await element.textContent();
-            return sanitizeText(rawPreparation);
-          })
-        );
 
-        // Generic ingredient
+        // Extracting ingredients
         const ingredients = await Promise.all(
-          ingredientElements.map(async (element) => {
+          ingredientElements.map(async (element, index) => {
+            const rawPreparation = await ingredientElements[
+              index
+            ].textContent();
+            const preparation = sanitizeText(rawPreparation);
+
+            // Extracting ingredient text content excluding <span> elements
             const ingredientElement = await element.evaluate((tdElement) => {
-              // Function to extract text content excluding <span> elements
               const spanElements = tdElement.querySelectorAll("span");
               spanElements.forEach((spanElement) => {
                 spanElement.remove();
               });
-              return tdElement.textContent;
+              return tdElement.textContent.trim();
             });
-            return sanitizeText(ingredientElement);
+
+            const ingredient = sanitizeText(ingredientElement);
+
+            return {
+              ingredient,
+              preparation,
+            };
           })
         );
 
         const recipe = {
           title,
-          preparation,
-          ingredientAmount,
           ingredients,
         };
 
