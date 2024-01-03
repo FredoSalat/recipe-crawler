@@ -1,5 +1,5 @@
 import { PlaywrightCrawler, Dataset } from "crawlee";
-import { sanitizeText } from "./utilities.js";
+import { sanitizeText } from "../utilities.js";
 
 const loadedCategoriesLimit = 1;
 const loadedRecipeLimit = 1;
@@ -11,7 +11,11 @@ const crawler = new PlaywrightCrawler({
         const titleElement = await page.locator(".c-recipe__title");
 
         const ingredientElements = await page.$$(
-          ".recipe-page-body__ingredients"
+          ".recipe__ingredients > table > tbody > tr > td"
+        );
+
+        const ingredientAmountElements = await page.$$(
+          ".recipe__ingredients > table > tbody > tr > td > span"
         );
 
         if (!titleElement) {
@@ -22,38 +26,48 @@ const crawler = new PlaywrightCrawler({
           throw new Error(`Ingredients not found on this page ${request.url}`);
         }
 
+        if (!ingredientAmountElements) {
+          throw new Error(
+            `Ingredient units not found on this page ${request.url}`
+          );
+        }
         // recipe name
         const rawTitle = await titleElement.textContent();
         const title = sanitizeText(rawTitle);
+        // amount + unit
+        const ingredientAmount = await Promise.all(
+          ingredientAmountElements.map(async (element) => {
+            const rawAmount = await element.textContent();
+            return sanitizeText(rawAmount);
+          })
+        );
+        // Ingredient + amount
+        const preparation = await Promise.all(
+          ingredientElements.map(async (element) => {
+            const rawPreparation = await element.textContent();
+            return sanitizeText(rawPreparation);
+          })
+        );
 
-        // Extracting ingredients
+        // Generic ingredient
         const ingredients = await Promise.all(
-          ingredientElements.map(async (element, index) => {
-            const rawPreparation = await ingredientElements[
-              index
-            ].textContent();
-            const preparation = sanitizeText(rawPreparation);
-
-            // Extracting ingredient text content excluding <span> elements
+          ingredientElements.map(async (element) => {
             const ingredientElement = await element.evaluate((tdElement) => {
+              // Function to extract text content excluding <span> elements
               const spanElements = tdElement.querySelectorAll("span");
               spanElements.forEach((spanElement) => {
                 spanElement.remove();
               });
-              return tdElement.textContent.trim();
+              return tdElement.textContent;
             });
-
-            const ingredient = sanitizeText(ingredientElement);
-
-            return {
-              ingredient,
-              preparation,
-            };
+            return sanitizeText(ingredientElement);
           })
         );
 
         const recipe = {
           title,
+          preparation,
+          ingredientAmount,
           ingredients,
         };
 

@@ -10,64 +10,72 @@ const crawler = new PlaywrightCrawler({
       if (request.label === "DETAIL") {
         const titleElement = await page.locator(".c-recipe__title");
 
+        const imageElements = await page.$$(".c-recipe__image > picture > img");
+
+        if (!imageElements || imageElements.length === 0) {
+          throw new Error(`Image not found on this page ${request.url}`);
+        }
+
         const ingredientElements = await page.$$(
-          ".recipe__ingredients > table > tbody > tr > td"
+          ".recipe-page-body__ingredients"
         );
 
-        const ingredientAmountElements = await page.$$(
-          ".recipe__ingredients > table > tbody > tr > td > span"
-        );
+        const imageElement = imageElements[0];
 
         if (!titleElement) {
           throw new Error(`Title not found on this page ${request.url}`);
+        }
+
+        if (!imageElement) {
+          throw new Error(`Image not found on this page ${request.url}`);
         }
 
         if (!ingredientElements) {
           throw new Error(`Ingredients not found on this page ${request.url}`);
         }
 
-        if (!ingredientAmountElements) {
-          throw new Error(
-            `Ingredient units not found on this page ${request.url}`
-          );
-        }
         // recipe name
         const rawTitle = await titleElement.textContent();
         const title = sanitizeText(rawTitle);
-        // amount + unit
-        const ingredientAmount = await Promise.all(
-          ingredientAmountElements.map(async (element) => {
-            const rawAmount = await element.textContent();
-            return sanitizeText(rawAmount);
-          })
-        );
-        // Ingredient + amount
-        const preparation = await Promise.all(
-          ingredientElements.map(async (element) => {
-            const rawPreparation = await element.textContent();
-            return sanitizeText(rawPreparation);
-          })
-        );
 
-        // Generic ingredient
+        // Extracting the image URL from the 'src' attribute
+        const rawImageURL = await imageElement.getAttribute("src");
+
+        const imageURL = rawImageURL.split("?")[0];
+
+        if (!imageURL) {
+          throw new Error(`Image URL not found on this page ${request.url}`);
+        }
+
+        // Extracting ingredients
         const ingredients = await Promise.all(
-          ingredientElements.map(async (element) => {
+          ingredientElements.map(async (element, index) => {
+            const rawPreparation = await ingredientElements[
+              index
+            ].textContent();
+            const preparation = sanitizeText(rawPreparation);
+
+            // Extracting ingredient text content excluding <span> elements
             const ingredientElement = await element.evaluate((tdElement) => {
-              // Function to extract text content excluding <span> elements
               const spanElements = tdElement.querySelectorAll("span");
               spanElements.forEach((spanElement) => {
                 spanElement.remove();
               });
-              return tdElement.textContent;
+              return tdElement.textContent.trim();
             });
-            return sanitizeText(ingredientElement);
+
+            const ingredient = sanitizeText(ingredientElement);
+
+            return {
+              ingredient,
+              preparation,
+            };
           })
         );
 
         const recipe = {
           title,
-          preparation,
-          ingredientAmount,
+          imageURL,
           ingredients,
         };
 
