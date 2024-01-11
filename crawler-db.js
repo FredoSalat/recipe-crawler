@@ -1,5 +1,8 @@
-import { PlaywrightCrawler, Dataset } from "crawlee";
-import { sanitizeText } from "./utilities.js";
+import { PlaywrightCrawler } from "crawlee";
+import { sanitizeText } from "../js/utilities.js";
+import sqlite3 from "sqlite3";
+
+const db = new sqlite3.Database("recipe.db");
 
 const loadedCategoriesLimit = 1;
 const loadedRecipeLimit = 1;
@@ -38,8 +41,11 @@ const crawler = new PlaywrightCrawler({
         const rawTitle = await titleElement.textContent();
         const title = sanitizeText(rawTitle);
 
-        // Extracting the image URL from the 'src' attribute
         const rawImageURL = await imageElement.getAttribute("src");
+
+        if (!rawImageURL) {
+          throw new Error("Raw Image URL not found on this page");
+        }
 
         const imageURL = rawImageURL.split("?")[0];
 
@@ -61,7 +67,7 @@ const crawler = new PlaywrightCrawler({
               spanElements.forEach((spanElement) => {
                 spanElement.remove();
               });
-              return tdElement.textContent.trim();
+              return tdElement.textContent;
             });
 
             const ingredient = sanitizeText(ingredientElement);
@@ -79,8 +85,29 @@ const crawler = new PlaywrightCrawler({
           ingredients,
         };
 
-        console.log(recipe);
-        await Dataset.pushData(recipe);
+        // Convert the ingredients object to a JSON string
+        const ingredientsString = JSON.stringify(recipe.ingredients);
+
+        db.serialize(() => {
+          db.run(`
+            CREATE TABLE IF NOT EXISTS recipe (
+              title TEXT,
+              imageURL TEXT,
+              ingredients TEXT
+            )
+          `);
+        });
+
+        const stmt = db.prepare(
+          "INSERT INTO recipe (title, imageURL, ingredients) VALUES (?, ?, ?)"
+        );
+
+        stmt.run(recipe.title, recipe.imageURL, ingredientsString);
+
+        stmt.finalize();
+
+        //console.log(recipe);
+        //await Dataset.pushData(recipe);
       } else if (request.label === "CATEGORY") {
         // Queues each recipe within every category
         await page.waitForSelector(".u-1\\/2 > a");
