@@ -1,11 +1,12 @@
 import { PlaywrightCrawler } from "crawlee";
 import sqlite3 from "sqlite3";
+
+import { addRecipeToDatabase } from "./database/dbUtilities.js";
 import {
-  addRecipeToDatabase,
   getImage,
   getIngredients,
   getTitle,
-} from "./utilities.js";
+} from "./recipeCrawler/recipeCrawler.js";
 
 const db = new sqlite3.Database("recipe.db");
 
@@ -19,7 +20,6 @@ const crawler = new PlaywrightCrawler({
         const title = await getTitle(page, request.url);
         const imageURL = await getImage(page, request.url);
         const ingredients = await getIngredients(page, request.url);
-
         await addRecipeToDatabase(db, title, imageURL, ingredients);
       } else if (request.label === "CATEGORY") {
         // Queues each recipe within every category

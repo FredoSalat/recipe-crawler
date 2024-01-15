@@ -1,26 +1,4 @@
-// Remove leading newline characters and dashes, whitespace and line breaks
-
-const sanitize = (text) => {
-  return text
-    .trim()
-    .replace(/^\s*–\s*/gm, "")
-    .replace(/\s+/g, " ")
-    .replace(/^[,\s]+|[,\s]+$/g, "");
-};
-
-const extractIngredient = async (element) => {
-  // Extracting ingredient text content excluding <span> elements
-
-  const ingredientElement = await element.evaluate((tdElement) => {
-    const spanElements = tdElement.querySelectorAll("span");
-    spanElements.forEach((spanElement) => {
-      spanElement.remove();
-    });
-    return tdElement.textContent;
-  });
-
-  return ingredientElement;
-};
+import { extractIngredient, sanitize } from "./recipeUtilities.js";
 
 export const getTitle = async (page, requestURL) => {
   const titleElement = await page.locator(".c-recipe__title");
@@ -92,39 +70,4 @@ export const getIngredients = async (page, requestURL) => {
   const stringifiedIngredients = JSON.stringify(ingredients);
 
   return stringifiedIngredients;
-};
-
-export const addRecipeToDatabase = async (
-  db,
-  title,
-  imageURL,
-  stringifiedIngredients
-) => {
-  await new Promise((resolve, reject) => {
-    db.run(
-      `
-      CREATE TABLE IF NOT EXISTS recipe (
-        title TEXT,
-        imageURL TEXT,
-        ingredients TEXT
-      )`,
-      (err) => {
-        if (err) {
-          console.error("Error creating table:", err.message);
-          reject(err);
-        } else {
-          console.log("Table 'recipe' created successfully");
-          resolve();
-        }
-      }
-    );
-  });
-
-  const stmt = db.prepare(
-    "INSERT INTO recipe (title, imageURL, ingredients) VALUES (?, ?, ?)"
-  );
-
-  stmt.run(title, imageURL, stringifiedIngredients);
-
-  stmt.finalize();
 };
