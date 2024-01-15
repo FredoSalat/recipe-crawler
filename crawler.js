@@ -1,10 +1,10 @@
 import { PlaywrightCrawler } from "crawlee";
 import sqlite3 from "sqlite3";
 import {
+  addRecipeToDatabase,
   getImage,
   getIngredients,
   getTitle,
-  sanitizeText,
 } from "./utilities.js";
 
 const db = new sqlite3.Database("recipe.db");
@@ -16,55 +16,11 @@ const crawler = new PlaywrightCrawler({
   requestHandler: async ({ page, request, enqueueLinks }) => {
     try {
       if (request.label === "DETAIL") {
-        const title = await getTitle(page, ".c-recipe__title", request.url);
+        const title = await getTitle(page, request.url);
+        const imageURL = await getImage(page, request.url);
+        const ingredients = await getIngredients(page, request.url);
 
-        const imageURL = getImage(
-          page,
-          ".c-recipe__image > picture > img",
-          request.url
-        );
-
-        const ingredients = getIngredients(
-          page,
-          ".recipe-page-body__ingredients",
-          request.url
-        );
-
-        const recipe = {
-          title,
-          imageURL,
-          ingredients,
-        };
-
-        const ingredientsString = JSON.stringify(recipe.ingredients);
-
-        await new Promise((resolve, reject) => {
-          db.run(
-            `
-            CREATE TABLE IF NOT EXISTS recipe (
-              title TEXT,
-              imageURL TEXT,
-              ingredients TEXT
-            )`,
-            (err) => {
-              if (err) {
-                console.error("Error creating table:", err.message);
-                reject(err);
-              } else {
-                console.log("Table 'recipe' created successfully");
-                resolve();
-              }
-            }
-          );
-        });
-
-        const stmt = db.prepare(
-          "INSERT INTO recipe (title, imageURL, ingredients) VALUES (?, ?, ?)"
-        );
-
-        stmt.run(recipe.title, recipe.imageURL, ingredientsString);
-
-        stmt.finalize();
+        await addRecipeToDatabase(db, title, imageURL, ingredients);
       } else if (request.label === "CATEGORY") {
         // Queues each recipe within every category
         await page.waitForSelector(".u-1\\/2 > a");
