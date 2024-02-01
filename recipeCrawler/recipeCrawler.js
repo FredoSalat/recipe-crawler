@@ -43,26 +43,22 @@ export const getImage = async (page, requestURL) => {
 };
 
 export const getIngredients = async (page, requestURL) => {
-  const ingredientElements = await page.$$(".recipe-page-body__ingredients");
+  const ingredientElements = await page.$$(".cts-impression-item > div");
 
   if (!ingredientElements) {
     throw new Error(`Ingredients not found on this page ${requestURL}`);
   }
 
   const ingredients = await Promise.all(
-    ingredientElements.map(async (element, index) => {
-      const rawPreparation = await ingredientElements[index].textContent();
-
-      const preparation = sanitize(rawPreparation);
-
-      const ingredientElement = await extractIngredient(element);
-
-      const ingredient = sanitize(ingredientElement);
-
-      return {
-        ingredient,
-        preparation,
-      };
+    ingredientElements.map(async (divElement) => {
+      const spans = await divElement.$$("span");
+      const ingredientText = await Promise.all(
+        spans.map(async (spanElement) => {
+          return await spanElement.textContent();
+        })
+      );
+      const preparation = sanitize(ingredientText.join(" "));
+      return preparation;
     })
   );
 

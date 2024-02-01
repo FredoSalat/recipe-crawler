@@ -23,8 +23,8 @@ const crawler = new PlaywrightCrawler({
         console.log(`Recipe: ${request.url}`);
         const title = await getTitle(page, request.url);
         const imageURL = await getImage(page, request.url);
-        //const ingredients = await getIngredients(page, request.url);
-        console.log(title, imageURL);
+        const ingredients = await getIngredients(page, request.url);
+        console.log(title, imageURL, ingredients);
         //await addRecipeToDatabase(db, title, imageURL, ingredients);
       } else if (request.label === "CATEGORY") {
         await page.waitForSelector(recipeSelector);
