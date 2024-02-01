@@ -15,13 +15,19 @@ export const getTitle = async (page, requestURL) => {
 };
 
 export const getImage = async (page, requestURL) => {
-  const imageElement = await page.$$("lg:print:rounded-tr-4r0");
+  const imageElements = await page.$$(".relative > img");
+
+  if (!imageElements || imageElements.length === 0) {
+    throw new Error(`Images not found on this page ${requestURL}`);
+  }
+
+  const imageElement = imageElements[1];
 
   if (!imageElement) {
     throw new Error(`Image not found on this page ${requestURL}`);
   }
 
-  const rawImageURL = await imageElement.getAttribute("src");
+  const rawImageURL = await imageElement.getAttribute("srcset");
 
   if (!rawImageURL) {
     throw new Error("Raw Image URL not found on this page");
