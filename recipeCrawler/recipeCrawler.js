@@ -1,7 +1,7 @@
 import { extractIngredient, sanitize } from "./recipeUtilities.js";
 
 export const getTitle = async (page, requestURL) => {
-  const titleElement = await page.locator(".c-recipe__title");
+  const titleElement = await page.locator("h1");
 
   if (!titleElement) {
     throw new Error(`Title not found on this page ${requestURL}`);
@@ -15,13 +15,7 @@ export const getTitle = async (page, requestURL) => {
 };
 
 export const getImage = async (page, requestURL) => {
-  const imageElements = await page.$$(".c-recipe__image > picture > img");
-
-  if (!imageElements || imageElements.length === 0) {
-    throw new Error(`Images not found on this page ${requestURL}`);
-  }
-
-  const imageElement = imageElements[0];
+  const imageElement = await page.$$("lg:print:rounded-tr-4r0");
 
   if (!imageElement) {
     throw new Error(`Image not found on this page ${requestURL}`);
