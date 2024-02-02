@@ -3,16 +3,21 @@ export const sanitize = (text) => {
   return text.replace(/\s+/g, " ");
 };
 
-export const extractIngredient = async (element) => {
-  // Extracting ingredient text content excluding <span> elements
+export const extractIngredients = async (ingredientElements) => {
+  const ingredients = await Promise.all(
+    ingredientElements.map(async (divElement) => {
+      const fragmentedIngredients = await divElement.$$("span");
+      const rawIngredient = await Promise.all(
+        fragmentedIngredients.map(async (fragmentedIngredient) => {
+          return await fragmentedIngredient.textContent();
+        })
+      );
+      const unsanitizedIngredient = rawIngredient.join(" ");
 
-  const ingredientElement = await element.evaluate((tdElement) => {
-    const spanElements = tdElement.querySelectorAll("span");
-    spanElements.forEach((spanElement) => {
-      spanElement.remove();
-    });
-    return tdElement.textContent;
-  });
+      const ingredient = sanitize(unsanitizedIngredient);
 
-  return ingredientElement;
+      return ingredient;
+    })
+  );
+  return ingredients.filter((ingredient) => ingredient !== "");
 };

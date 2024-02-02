@@ -1,4 +1,4 @@
-import { extractIngredient, sanitize } from "./recipeUtilities.js";
+import { extractIngredients, sanitize } from "./recipeUtilities.js";
 
 export const getTitle = async (page, requestURL) => {
   const titleElement = await page.locator("h1");
@@ -49,27 +49,11 @@ export const getIngredients = async (page, requestURL) => {
     throw new Error(`Ingredients not found on this page ${requestURL}`);
   }
 
-  const ingredientsWithEmptyStrings = await Promise.all(
-    ingredientElements.map(async (divElement) => {
-      const spans = await divElement.$$("span");
-      const rawIngredient = await Promise.all(
-        spans.map(async (spanElement) => {
-          return await spanElement.textContent();
-        })
-      );
-      const unsanitizedIngredient = rawIngredient.join(" ");
-
-      const ingredient = sanitize(unsanitizedIngredient);
-
-      return ingredient;
-    })
-  );
-
-  const ingredients = ingredientsWithEmptyStrings.filter(
-    (ingredient) => ingredient !== ""
-  );
+  const ingredients = await extractIngredients(ingredientElements);
 
   const stringifiedIngredients = JSON.stringify(ingredients);
 
   return stringifiedIngredients;
 };
+
+export const getCategory = async (page, requestURL) => {};
