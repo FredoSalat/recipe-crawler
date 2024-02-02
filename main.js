@@ -10,8 +10,8 @@ import {
 
 const db = new sqlite3.Database("recipe.db");
 
-const loadedCategoriesLimit = 1;
-const loadedRecipeLimit = 1;
+const enqueuedCategoriesLimit = 1;
+const enqueuedRecipesLimit = 1;
 
 const recipeSelector = ".scaling-card-image";
 const categorySelector = ".relative > a";
@@ -29,22 +29,18 @@ const crawler = new PlaywrightCrawler({
       } else if (request.label === "CATEGORY") {
         await page.waitForSelector(recipeSelector);
         await enqueueLinks({
-          limit: loadedRecipeLimit,
+          limit: enqueuedRecipesLimit,
           selector: recipeSelector,
           label: "DETAIL",
         });
-
         console.log(`Category: ${request.url}`);
       } else {
         await page.waitForSelector(categorySelector);
-
-        // Queues all categories on the category page
         await enqueueLinks({
-          limit: loadedCategoriesLimit,
+          limit: enqueuedCategoriesLimit,
           selector: categorySelector,
           label: "CATEGORY",
         });
-
         console.log(`List of categories: ${request.url}`);
       }
     } catch (error) {
