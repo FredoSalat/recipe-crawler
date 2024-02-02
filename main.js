@@ -3,6 +3,7 @@ import sqlite3 from "sqlite3";
 
 import { addRecipeToDatabase } from "./database/dbUtilities.js";
 import {
+  getCategory,
   getImage,
   getIngredients,
   getTitle,
@@ -25,7 +26,7 @@ const crawler = new PlaywrightCrawler({
         const imageURL = await getImage(page, request.url);
         const ingredients = await getIngredients(page, request.url);
         const category = await getCategory(page, request.url);
-        console.log(title, imageURL, ingredients);
+        console.log(title, imageURL, ingredients, category);
         //await addRecipeToDatabase(db, title, imageURL, ingredients);
       } else if (request.label === "CATEGORY") {
         await page.waitForSelector(recipeSelector);

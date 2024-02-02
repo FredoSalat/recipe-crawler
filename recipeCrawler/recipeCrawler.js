@@ -56,4 +56,22 @@ export const getIngredients = async (page, requestURL) => {
   return stringifiedIngredients;
 };
 
-export const getCategory = async (page, requestURL) => {};
+export const getCategory = async (page, requestURL) => {
+  const categoryElements = await page.$$(
+    "span.text-1r6.text-ui-greyscale-grey-7.whitespace-nowrap.print\\:text-black"
+  );
+
+  if (!categoryElements || categoryElements.length === 0) {
+    throw new Error(`Category not found on this page ${requestURL}`);
+  }
+
+  const categories = [];
+  for (const categoryElement of categoryElements) {
+    const category = await categoryElement.textContent();
+    categories.push(category);
+  }
+
+  console.log(categories);
+
+  return categories;
+};
