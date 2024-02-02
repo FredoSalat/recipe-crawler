@@ -49,20 +49,26 @@ export const getIngredients = async (page, requestURL) => {
     throw new Error(`Ingredients not found on this page ${requestURL}`);
   }
 
-  const ingredients = await Promise.all(
+  const ingredientsWithEmptyStrings = await Promise.all(
     ingredientElements.map(async (divElement) => {
       const spans = await divElement.$$("span");
-      const ingredientText = await Promise.all(
+      const rawIngredient = await Promise.all(
         spans.map(async (spanElement) => {
           return await spanElement.textContent();
         })
       );
-      const preparation = sanitize(ingredientText.join(" "));
-      return preparation;
+      const unsanitizedIngredient = rawIngredient.join(" ");
+
+      const ingredient = sanitize(unsanitizedIngredient);
+
+      return ingredient;
     })
   );
 
-  // stringifying to store array of objects in sqliteDB
+  const ingredients = ingredientsWithEmptyStrings.filter(
+    (ingredient) => ingredient !== ""
+  );
+
   const stringifiedIngredients = JSON.stringify(ingredients);
 
   return stringifiedIngredients;
