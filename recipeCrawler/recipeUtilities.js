@@ -1,6 +1,6 @@
 // Remove leading newline characters and dashes, whitespace and line breaks
 export const sanitize = (text) => {
-  return text.replace(/\s+/g, " ");
+  return text.trim().replace(/\s+/g, " ");
 };
 
 export const extractIngredients = async (ingredientElements) => {

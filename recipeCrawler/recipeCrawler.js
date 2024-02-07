@@ -56,22 +56,36 @@ export const getIngredients = async (page, requestURL) => {
   return stringifiedIngredients;
 };
 
-export const getCategory = async (page, requestURL) => {
-  const categoryElements = await page.$$(
+export const getRecipeCharacteristics = async (page, requestURL) => {
+  const characteristicsElements = await page.$$(
     "span.text-1r6.text-ui-greyscale-grey-7.whitespace-nowrap.print\\:text-black"
   );
 
-  if (!categoryElements || categoryElements.length === 0) {
+  if (!characteristicsElements || characteristicsElements.length === 0) {
     throw new Error(`Category not found on this page ${requestURL}`);
   }
 
-  const categories = [];
-  for (const categoryElement of categoryElements) {
-    const category = await categoryElement.textContent();
-    categories.push(category);
+  const characteristics = [];
+  for (const characteristicElement of characteristicsElements) {
+    const characteristic = await characteristicElement.textContent();
+    characteristics.push(characteristic);
   }
 
-  console.log(categories);
+  return characteristics;
+};
 
-  return categories;
+export const getInstructions = async (page, requestURL) => {
+  const instructionsElements = await page.$$(".mt-0r6.leading-normal");
+
+  if (!instructionsElements || instructionsElements.length === 0) {
+    throw new Error(`Instructions not found on this page ${requestURL}`);
+  }
+
+  const instructions = [];
+  for (const instructionElement of instructionsElements) {
+    const instruction = await instructionElement.textContent();
+    instructions.push(sanitize(instruction));
+  }
+
+  return instructions;
 };

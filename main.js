@@ -3,16 +3,17 @@ import sqlite3 from "sqlite3";
 
 import { addRecipeToDatabase } from "./database/dbUtilities.js";
 import {
-  getCategory,
   getImage,
   getIngredients,
+  getInstructions,
+  getRecipeCharacteristics,
   getTitle,
 } from "./recipeCrawler/recipeCrawler.js";
 
 const db = new sqlite3.Database("recipe.db");
 
 const enqueuedCategoriesLimit = 1;
-const enqueuedRecipesLimit = 1;
+const enqueuedRecipesLimit = 5;
 
 const recipeSelector = ".scaling-card-image";
 const categorySelector = ".relative > a";
@@ -25,8 +26,20 @@ const crawler = new PlaywrightCrawler({
         const title = await getTitle(page, request.url);
         const imageURL = await getImage(page, request.url);
         const ingredients = await getIngredients(page, request.url);
-        const category = await getCategory(page, request.url);
-        console.log(title, imageURL, ingredients, category);
+        const [amount, cookingTime, category] = await getRecipeCharacteristics(
+          page,
+          request.url
+        );
+        const cookingInstructions = await getInstructions(page, request.url);
+        console.log(
+          title,
+          imageURL,
+          ingredients,
+          amount,
+          cookingTime,
+          category,
+          cookingInstructions
+        );
         //await addRecipeToDatabase(db, title, imageURL, ingredients);
       } else if (request.label === "CATEGORY") {
         await page.waitForSelector(recipeSelector);
