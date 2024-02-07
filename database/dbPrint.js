@@ -7,6 +7,6 @@ db.all("SELECT * FROM recipe", (err, rows) => {
     console.error("Error retrieving data from the database:", err.message);
   } else {
     console.log("Contents of the 'recipe' table:");
-    console.table(rows); // Log the data in tabular format
+    console.table(rows);
   }
 });

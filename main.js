@@ -31,7 +31,9 @@ const crawler = new PlaywrightCrawler({
           request.url
         );
         const cookingInstructions = await getInstructions(page, request.url);
-        console.log(
+
+        await addRecipeToDatabase(
+          db,
           title,
           imageURL,
           ingredients,
@@ -40,7 +42,6 @@ const crawler = new PlaywrightCrawler({
           category,
           cookingInstructions
         );
-        //await addRecipeToDatabase(db, title, imageURL, ingredients);
       } else if (request.label === "CATEGORY") {
         await page.waitForSelector(recipeSelector);
         await enqueueLinks({

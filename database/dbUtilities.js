@@ -1,11 +1,24 @@
-export const addRecipeToDatabase = async (db, title, imageURL, ingredients) => {
+export const addRecipeToDatabase = async (
+  db,
+  title,
+  imageURL,
+  ingredients,
+  amount,
+  cookingTime,
+  category,
+  cookingInstructions
+) => {
   await new Promise((resolve, reject) => {
     db.run(
       `
         CREATE TABLE IF NOT EXISTS recipe (
           title TEXT,
           imageURL TEXT,
-          ingredients TEXT
+          ingredients TEXT,
+          amount TEXT,
+          cookingTime TEXT,
+          category TEXT,
+          cookingInstructions TEXT
         )`,
       (err) => {
         if (err) {
@@ -20,10 +33,18 @@ export const addRecipeToDatabase = async (db, title, imageURL, ingredients) => {
   });
 
   const stmt = db.prepare(
-    "INSERT INTO recipe (title, imageURL, ingredients) VALUES (?, ?, ?)"
+    "INSERT INTO recipe (title, imageURL, ingredients, amount, cookingTime, category, cookingInstructions) VALUES (?, ?, ?, ?, ?, ?, ?)"
   );
 
-  stmt.run(title, imageURL, ingredients);
+  stmt.run(
+    title,
+    imageURL,
+    ingredients,
+    amount,
+    cookingTime,
+    category,
+    cookingInstructions
+  );
 
   stmt.finalize();
 };

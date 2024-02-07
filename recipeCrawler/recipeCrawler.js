@@ -87,5 +87,7 @@ export const getInstructions = async (page, requestURL) => {
     instructions.push(sanitize(instruction));
   }
 
-  return instructions;
+  const stringifiedInstructions = JSON.stringify(instructions);
+
+  return stringifiedInstructions;
 };
